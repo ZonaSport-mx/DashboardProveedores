@@ -279,6 +279,18 @@
   </div>
 </section>
 
+<section id="pumapct-section">
+  <div class="wrap">
+    <div class="section-head">
+      <h2 class="display">Peso de Puma dentro de cada proveedor, año por año</h2>
+      <p class="section-note">Unidades Puma vendidas ÷ unidades totales compradas ese año, por proveedor. Como la venta puede salir de inventario de años anteriores, el dato puede superar 100% — lo relevante es la tendencia, no el valor exacto.</p>
+    </div>
+    <div class="chart-box tall">
+      <canvas id="chartPumaPct"></canvas>
+    </div>
+  </div>
+</section>
+
 <section id="spotlight-section">
   <div class="wrap">
     <div class="spotlight">
@@ -291,7 +303,12 @@
             <div><div class="n" id="mPalermoUnits"></div><div class="l">Unidades compradas a Palermo</div></div>
             <div><div class="n" id="mPalermoPuma"></div><div class="l">Unidades Puma vendidas vía Palermo</div></div>
             <div><div class="n" id="mPalermoRank"></div><div class="l">Proveedor #1 en volumen</div></div>
+            <div><div class="n" id="mPalermoPumaYears"></div><div class="l">años como el #1 en Puma, de 14</div></div>
           </div>
+          <p style="margin-top:20px;font-size:14px;">
+            <span class="big" style="color:var(--paper);">Con transparencia:</span>
+            nuestra compra de Puma con Palermo tuvo su punto más alto en <span id="pkYear"></span> (<span id="pkUnits"></span> pares) y desde entonces ha bajado a <span id="lastUnits"></span> en 2026, conforme sumamos más proveedores a la mezcla. Aun con esa baja, Palermo nunca ha dejado de ser nuestra fuente #1 de Puma, año tras año — algo que ningún otro proveedor puede decir.
+          </p>
         </div>
         <div class="chart-box" style="height:320px;position:relative;">
           <canvas id="chartPalermoDetail"></canvas>
@@ -315,6 +332,32 @@
         <canvas id="chartSharePuma"></canvas>
       </div>
     </div>
+  </div>
+</section>
+
+<section id="composicion-section">
+  <div class="wrap">
+    <div class="section-head">
+      <h2 class="display">Por qué Palermo es el 48.8% del total</h2>
+      <p class="section-note">No es un promedio inflado por un solo año: cada barra es 100% de lo comprado ese año, repartido entre los 4 proveedores.</p>
+    </div>
+    <div class="chart-box tall">
+      <canvas id="chartComposicion"></canvas>
+    </div>
+    <p style="margin-top:18px;font-size:14px;color:var(--paper-dim);max-width:680px;">Palermo fue nuestro proveedor con más volumen en <span id="palermoWinsCompras" style="color:var(--gold-soft);font-weight:600;"></span> de los 14 años. Al inicio de la relación era prácticamente nuestro único proveedor; con los años sumamos a Raga, Grabasa/Typhoon/BR y Ramirez/Family, y la competencia entre proveedores se ha vuelto más pareja — sobre todo en los últimos 4 años.</p>
+  </div>
+</section>
+
+<section id="crecimiento-section">
+  <div class="wrap">
+    <div class="section-head">
+      <h2 class="display">Crecimiento reciente: 2021 vs. 2026</h2>
+      <p class="section-note">Unidades Puma vendidas por proveedor, comparando el año pico (2021) contra el más reciente (2026).</p>
+    </div>
+    <div class="chart-box tall">
+      <canvas id="chartCrecimiento"></canvas>
+    </div>
+    <p style="margin-top:18px;font-size:14px;color:var(--paper-dim);max-width:680px;">Aquí está el punto incómodo pero honesto: mientras Raga, Grabasa/Typhoon/BR y Ramirez/Family crecieron su volumen de Puma con nosotros en este periodo, con Palermo bajó. Creemos que esa tendencia se puede revertir — y por eso buscamos esta conversación.</p>
   </div>
 </section>
 
@@ -367,9 +410,9 @@ const LABELS = {
 };
 const COLORS = {
   PALERMO:"#c99a4b",
-  RAGA:"#6b7682",
-  GRABASA_TYPHOON_BR:"#8a94a0",
-  RAMIREZ_FAMILY:"#525c66"
+  RAGA:"#5b7c99",
+  GRABASA_TYPHOON_BR:"#6f9b7f",
+  RAMIREZ_FAMILY:"#9a6b7c"
 };
 
 function sum(arr, idx){ return arr.reduce((a,r)=>a+r[idx],0); }
@@ -395,6 +438,21 @@ const palermoPumaShare = totals.PALERMO.pumaUnidades / totals.PALERMO.unidades *
 const rankedSuppliers = [...SUPPLIERS].sort((a,b)=>totals[b].unidades-totals[a].unidades);
 const palermoRank = rankedSuppliers.indexOf('PALERMO')+1;
 
+// ---- Per-year leaders (compras) and Puma leadership streak ----
+let palermoComprasWins = 0;
+let palermoPumaWins = 0;
+YEARS.forEach((yr,i)=>{
+  const comprasLeader = SUPPLIERS.reduce((best,s)=> RAW.compras[s][i][1] > RAW.compras[best][i][1] ? s : best, SUPPLIERS[0]);
+  if(comprasLeader==='PALERMO') palermoComprasWins++;
+  const pumaLeader = SUPPLIERS.reduce((best,s)=> RAW.puma[s][i][1] > RAW.puma[best][i][1] ? s : best, SUPPLIERS[0]);
+  if(pumaLeader==='PALERMO') palermoPumaWins++;
+});
+
+// ---- Palermo Puma peak year ----
+let peakYear = YEARS[0], peakUnits = RAW.puma.PALERMO[0][1];
+RAW.puma.PALERMO.forEach(r=>{ if(r[1]>peakUnits){ peakUnits=r[1]; peakYear=r[0]; } });
+const lastUnitsPalermoPuma = RAW.puma.PALERMO[RAW.puma.PALERMO.length-1][1];
+
 // ---- Hero stats ----
 document.getElementById('heroStats').innerHTML = `
   <div class="stat"><div class="num">${fmtInt(totals.PALERMO.unidades)}</div><div class="lbl">pares comprados a Palermo desde 2013</div></div>
@@ -409,6 +467,11 @@ document.getElementById('spPumaShare').textContent = fmtPct(palermoPumaShare);
 document.getElementById('mPalermoUnits').textContent = fmtInt(totals.PALERMO.unidades);
 document.getElementById('mPalermoPuma').textContent = fmtInt(totals.PALERMO.pumaUnidades);
 document.getElementById('mPalermoRank').textContent = '#'+palermoRank;
+document.getElementById('mPalermoPumaYears').textContent = palermoPumaWins+'/14';
+document.getElementById('pkYear').textContent = peakYear;
+document.getElementById('pkUnits').textContent = fmtInt(peakUnits);
+document.getElementById('lastUnits').textContent = fmtInt(lastUnitsPalermoPuma);
+document.getElementById('palermoWinsCompras').textContent = palermoComprasWins+' de 14';
 
 // ---- Chart defaults ----
 Chart.defaults.font.family = "'Inter', sans-serif";
@@ -451,6 +514,72 @@ function pumaLineDataset(s){
 new Chart(document.getElementById('chartPuma'), {
   type:'line',
   data:{ labels:YEARS, datasets: SUPPLIERS.map(s=>pumaLineDataset(s)) },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{position:'bottom', labels:{boxWidth:10,boxHeight:10,padding:16}}},
+    scales:{ y:{ title:{display:true,text:'Unidades Puma vendidas'}, grid:{color:'#232d37'} }, x:{grid:{display:false}} }
+  }
+});
+
+// ---- % Puma sobre compras totales, por proveedor y año ----
+function pctDataset(s){
+  return {
+    label: LABELS[s],
+    data: RAW.compras[s].map((r,i)=> r[1]>0 ? (RAW.puma[s][i][1]/r[1]*100) : null),
+    borderColor: COLORS[s],
+    backgroundColor: COLORS[s],
+    borderWidth: s==='PALERMO'?3:1.75,
+    pointRadius: s==='PALERMO'?3:0,
+    tension:0.25,
+    spanGaps:true
+  };
+}
+new Chart(document.getElementById('chartPumaPct'), {
+  type:'line',
+  data:{ labels:YEARS, datasets: SUPPLIERS.map(s=>pctDataset(s)) },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{position:'bottom', labels:{boxWidth:10,boxHeight:10,padding:16}}},
+    scales:{ y:{ title:{display:true,text:'% de Puma sobre lo comprado ese año'}, grid:{color:'#232d37'}, ticks:{callback:v=>v+'%'} }, x:{grid:{display:false}} }
+  }
+});
+
+// ---- Composición anual (100% stacked) ----
+new Chart(document.getElementById('chartComposicion'), {
+  type:'bar',
+  data:{
+    labels:YEARS,
+    datasets: SUPPLIERS.map(s=>({
+      label: LABELS[s],
+      data: RAW.compras[s].map((r,i)=>{
+        const totalYr = SUPPLIERS.reduce((a,ss)=>a+RAW.compras[ss][i][1],0);
+        return totalYr>0 ? (r[1]/totalYr*100) : 0;
+      }),
+      backgroundColor: COLORS[s],
+      stack:'a'
+    }))
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{position:'bottom', labels:{boxWidth:10,boxHeight:10,padding:16}}},
+    scales:{
+      y:{ stacked:true, max:100, title:{display:true,text:'% del total comprado ese año'}, grid:{color:'#232d37'}, ticks:{callback:v=>v+'%'} },
+      x:{ stacked:true, grid:{display:false} }
+    }
+  }
+});
+
+// ---- Crecimiento 2021 vs 2026 (Puma) ----
+const idx2021 = YEARS.indexOf(2021), idx2026 = YEARS.indexOf(2026);
+new Chart(document.getElementById('chartCrecimiento'), {
+  type:'bar',
+  data:{
+    labels: SUPPLIERS.map(s=>LABELS[s]),
+    datasets:[
+      { label:'2021', data: SUPPLIERS.map(s=>RAW.puma[s][idx2021][1]), backgroundColor:'#3a4652' },
+      { label:'2026', data: SUPPLIERS.map(s=>RAW.puma[s][idx2026][1]), backgroundColor:'#c99a4b' }
+    ]
+  },
   options:{
     responsive:true, maintainAspectRatio:false,
     plugins:{legend:{position:'bottom', labels:{boxWidth:10,boxHeight:10,padding:16}}},

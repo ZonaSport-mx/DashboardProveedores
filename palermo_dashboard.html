@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Historial de Compras y Ventas Puma — Análisis por Proveedor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+  :root{
+    --ink:#12181f;
+    --panel:#1a222b;
+    --panel-2:#212b35;
+    --paper:#ede8dc;
+    --paper-dim:#b7b0a0;
+    --gold:#c99a4b;
+    --gold-soft:#e0bd80;
+    --teal:#4f8b83;
+    --muted-1:#6b7682;
+    --muted-2:#8a94a0;
+    --muted-3:#525c66;
+    --rule:#2c3843;
+    --good:#7fae7a;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--ink);
+    color:var(--paper);
+    font-family:'Inter',sans-serif;
+    line-height:1.5;
+  }
+  h1,h2,h3,.display{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    letter-spacing:-0.01em;
+    margin:0;
+  }
+  .wrap{
+    max-width:1100px;
+    margin:0 auto;
+    padding:0 32px;
+  }
+  /* ---------- HERO ---------- */
+  header.hero{
+    padding:88px 0 64px;
+    border-bottom:1px solid var(--rule);
+  }
+  .kicker{
+    color:var(--gold-soft);
+    font-size:15px;
+    font-weight:600;
+    margin-bottom:18px;
+  }
+  h1.display{
+    font-size:clamp(34px,5vw,56px);
+    line-height:1.08;
+    max-width:820px;
+    color:var(--paper);
+  }
+  h1.display em{
+    font-style:italic;
+    color:var(--gold-soft);
+  }
+  .hero-sub{
+    max-width:620px;
+    margin-top:22px;
+    font-size:17px;
+    color:var(--paper-dim);
+  }
+  .stat-row{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:1px;
+    background:var(--rule);
+    margin-top:56px;
+    border:1px solid var(--rule);
+  }
+  .stat{
+    background:var(--ink);
+    padding:26px 22px;
+  }
+  .stat .num{
+    font-family:'Fraunces',serif;
+    font-size:38px;
+    font-weight:600;
+    color:var(--gold-soft);
+    line-height:1;
+  }
+  .stat .lbl{
+    margin-top:10px;
+    font-size:13.5px;
+    color:var(--paper-dim);
+    max-width:22ch;
+  }
+
+  /* ---------- SECTIONS ---------- */
+  section{
+    padding:64px 0;
+    border-bottom:1px solid var(--rule);
+  }
+  section:last-of-type{border-bottom:none;}
+  .section-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    gap:24px;
+    margin-bottom:34px;
+    flex-wrap:wrap;
+  }
+  h2.display{
+    font-size:28px;
+    max-width:520px;
+  }
+  .section-note{
+    font-size:14px;
+    color:var(--paper-dim);
+    max-width:280px;
+    text-align:left;
+  }
+  .chart-box{
+    background:var(--panel);
+    border:1px solid var(--rule);
+    padding:28px 26px;
+  }
+  .chart-box.tall{height:380px;position:relative;}
+  .chart-box canvas{max-height:100%;}
+  .legend-note{
+    display:flex;
+    gap:22px;
+    flex-wrap:wrap;
+    margin-top:18px;
+    font-size:13px;
+    color:var(--paper-dim);
+  }
+  .legend-note span{display:inline-flex;align-items:center;gap:7px;}
+  .dot{width:9px;height:9px;border-radius:50%;display:inline-block;}
+
+  /* ---------- SPOTLIGHT ---------- */
+  .spotlight{
+    background:linear-gradient(180deg,#20180d 0%, var(--panel) 100%);
+    border:1px solid var(--gold);
+    padding:36px 32px;
+  }
+  .spotlight-grid{
+    display:grid;
+    grid-template-columns:1.1fr 1.4fr;
+    gap:40px;
+    align-items:center;
+  }
+  @media (max-width:860px){
+    .spotlight-grid{grid-template-columns:1fr;}
+    .stat-row{grid-template-columns:repeat(2,1fr);}
+  }
+  .spotlight h3{
+    font-size:24px;
+    color:var(--gold-soft);
+    margin-bottom:14px;
+  }
+  .spotlight p{
+    color:var(--paper-dim);
+    font-size:15.5px;
+    margin:0 0 12px;
+  }
+  .spotlight .big{
+    color:var(--paper);
+    font-weight:600;
+  }
+  .mini-stats{
+    display:flex;
+    gap:28px;
+    margin-top:20px;
+    flex-wrap:wrap;
+  }
+  .mini-stats div{min-width:120px;}
+  .mini-stats .n{font-family:'Fraunces',serif;font-size:26px;color:var(--gold-soft);}
+  .mini-stats .l{font-size:12.5px;color:var(--paper-dim);margin-top:4px;}
+
+  /* ---------- TABS ---------- */
+  .tabs{
+    display:flex;
+    gap:8px;
+    margin-bottom:24px;
+    flex-wrap:wrap;
+  }
+  .tab{
+    padding:9px 16px;
+    background:var(--panel);
+    border:1px solid var(--rule);
+    color:var(--paper-dim);
+    font-size:13.5px;
+    font-weight:500;
+    cursor:pointer;
+    font-family:'Inter',sans-serif;
+  }
+  .tab.active{
+    background:var(--gold);
+    border-color:var(--gold);
+    color:#231a0c;
+  }
+
+  /* ---------- TABLE ---------- */
+  table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:14px;
+  }
+  th,td{
+    text-align:right;
+    padding:11px 14px;
+    border-bottom:1px solid var(--rule);
+    white-space:nowrap;
+  }
+  th:first-child,td:first-child{text-align:left;}
+  thead th{
+    color:var(--paper-dim);
+    font-weight:600;
+    font-size:12.5px;
+    border-bottom:1px solid var(--muted-3);
+  }
+  tbody tr:hover{background:var(--panel-2);}
+  tr.highlight td{color:var(--gold-soft);font-weight:600;}
+  tr.total td{border-top:1px solid var(--muted-3);font-weight:600;color:var(--paper);}
+
+  footer{
+    padding:56px 0 80px;
+  }
+  .ask{
+    background:var(--panel);
+    border-left:3px solid var(--gold);
+    padding:28px 30px;
+    max-width:720px;
+  }
+  .ask p{color:var(--paper-dim);font-size:15.5px;margin:0 0 10px;}
+  .ask p:last-child{margin-bottom:0;}
+  .ask .lead{color:var(--paper);font-size:17px;font-weight:500;font-family:'Fraunces',serif;}
+  .foot-meta{
+    margin-top:40px;
+    font-size:12.5px;
+    color:var(--muted-2);
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="kicker">Historial 2013 – 2026 · Compras totales y ventas de la línea Puma</div>
+    <h1 class="display">Catorce años comprando juntos, y <em>Palermo</em> es nuestro socio más grande.</h1>
+    <p class="hero-sub">Este es el historial completo de lo que hemos comprado a nuestros cuatro proveedores, y lo que hemos vendido de la marca Puma a través de cada uno de ellos. Los números hablan solos: con Palermo tenemos el volumen más alto, la relación más larga y la mayor participación de Puma en nuestro negocio.</p>
+
+    <div class="stat-row" id="heroStats"></div>
+  </div>
+</header>
+
+<section id="compras-section">
+  <div class="wrap">
+    <div class="section-head">
+      <h2 class="display">Compras totales por proveedor, año con año</h2>
+      <p class="section-note">Unidades compradas a cada proveedor entre 2013 y 2026. Palermo se destaca en oro; el resto en tonos neutros.</p>
+    </div>
+    <div class="chart-box tall">
+      <canvas id="chartCompras"></canvas>
+    </div>
+  </div>
+</section>
+
+<section id="puma-section">
+  <div class="wrap">
+    <div class="section-head">
+      <h2 class="display">Ventas de Puma por proveedor, año con año</h2>
+      <p class="section-note">De todo lo que compramos, esto es lo que corresponde específicamente a la línea Puma, por proveedor.</p>
+    </div>
+    <div class="chart-box tall">
+      <canvas id="chartPuma"></canvas>
+    </div>
+  </div>
+</section>
+
+<section id="spotlight-section">
+  <div class="wrap">
+    <div class="spotlight">
+      <div class="spotlight-grid">
+        <div>
+          <h3>Lo que representa Palermo para nosotros</h3>
+          <p>De cada <span class="big">10 pares que compramos</span> en estos catorce años, más de <span class="big" id="spShare"></span> vinieron de Palermo. Y dentro de esa relación, Puma no es un producto más: es <span class="big" id="spPumaShare"></span> de todo lo que le compramos.</p>
+          <p>Ningún otro proveedor se acerca a ese nivel de compromiso, ni en volumen total ni en participación de la marca Puma.</p>
+          <div class="mini-stats">
+            <div><div class="n" id="mPalermoUnits"></div><div class="l">Unidades compradas a Palermo</div></div>
+            <div><div class="n" id="mPalermoPuma"></div><div class="l">Unidades Puma vendidas vía Palermo</div></div>
+            <div><div class="n" id="mPalermoRank"></div><div class="l">Proveedor #1 en volumen</div></div>
+          </div>
+        </div>
+        <div class="chart-box" style="height:320px;position:relative;">
+          <canvas id="chartPalermoDetail"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="comparativa-section">
+  <div class="wrap">
+    <div class="section-head">
+      <h2 class="display">Participación de cada proveedor, 2013–2026</h2>
+      <p class="section-note">Suma total del periodo. A la izquierda, unidades compradas en general. A la derecha, unidades de Puma vendidas.</p>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;" id="shareGrid">
+      <div class="chart-box" style="height:300px;position:relative;">
+        <canvas id="chartShareCompras"></canvas>
+      </div>
+      <div class="chart-box" style="height:300px;position:relative;">
+        <canvas id="chartSharePuma"></canvas>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="tabla-section">
+  <div class="wrap">
+    <div class="section-head">
+      <h2 class="display">Detalle año por año</h2>
+      <p class="section-note">Selecciona un proveedor para ver su historial completo de compras y ventas Puma.</p>
+    </div>
+    <div class="tabs" id="tabs"></div>
+    <div class="chart-box">
+      <table id="dataTable">
+        <thead>
+          <tr>
+            <th>Año</th>
+            <th>Unidades compradas</th>
+            <th>Costo sin IVA</th>
+            <th>Costo con IVA</th>
+            <th>Unidades Puma</th>
+            <th>Total ventas Puma</th>
+            <th>% Puma / compras</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="ask">
+      <p class="lead">Esto es lo que traemos a la mesa.</p>
+      <p>Catorce años de historia, el mayor volumen de compra entre nuestros proveedores, y la mayor apuesta por la línea Puma dentro de nuestro negocio. Creemos que esa preferencia debería ser mutua: mejores condiciones, prioridad de inventario y trato preferencial en las próximas temporadas.</p>
+    </div>
+    <div class="foot-meta">Fuente: HISTORICO_PROVEEDORES.xlsx — hojas "PROVEEDORES COMPRAS POR AÑO" e "HISTORICO PUMA". Cifras acumuladas 2013–2026.</div>
+  </div>
+</footer>
+
+<script>
+const RAW = {"compras": {"PALERMO": [[2013, 3258, 1963048.94, 2277136.7704], [2014, 5014, 1982703.3, 2299935.8279999997], [2015, 5509, 2224396.37, 2580299.7892], [2016, 5896, 2678090.09, 3106584.5043999995], [2017, 7714, 3909204.33, 4534677.022799999], [2018, 7986, 4017727.17, 4660563.5172], [2019, 8126, 4191497.75, 4862137.39], [2020, 4418, 2403867.94, 2788486.8104], [2021, 5364, 2769770.81, 3212934.1396], [2022, 3901, 2694311.08, 3125400.8528], [2023, 3562, 1872376.74, 2171957.0184], [2024, 2264, 1339252.03, 1553532.3547999999], [2025, 1914, 915666.29, 1062172.8964], [2026, 1141, 597347.11, 692922.6475999999]], "RAGA": [[2013, 965, 384956.95, 446550.062], [2014, 1773, 740911.88, 859457.7808], [2015, 2360, 883722.79, 1025118.4364], [2016, 3054, 1344573.46, 1559705.2136], [2017, 3418, 1744436.81, 2023546.6996], [2018, 2713, 1499836.97, 1739810.8852], [2019, 4383, 2026646.27, 2350909.6732], [2020, 4946, 2511455.6, 2913288.496], [2021, 4212, 2484888.47, 2882470.6252], [2022, 4220, 1669712.02, 1936865.9431999999], [2023, 2769, 1733919.86, 2011347.0376], [2024, 2471, 1624950.38, 1884942.4407999997], [2025, 1112, 778440.5, 902990.98], [2026, 1962, 1212722.43, 1406758.0187999997]], "GRABASA_TYPHOON_BR": [[2013, 0, 0, 0], [2014, 0, 0, 0], [2015, 0, 0, 0], [2016, 282, 134020.22, 155463.4552], [2017, 735, 448237.88, 519955.9408], [2018, 220, 69852.24, 81028.5984], [2019, 1100, 765819.36, 888350.4576], [2020, 1662, 1231663.01, 1428729.0916], [2021, 978, 583606.53, 676983.5748], [2022, 888, 605704.97, 702617.7651999999], [2023, 1584, 977656.78, 1134081.8647999999], [2024, 1416, 930655.77, 1079560.6931999999], [2025, 3422, 1993470.21, 2312425.4436], [2026, 1446, 846211.09, 981604.8643999998]], "RAMIREZ_FAMILY": [[2013, 0, 0, 0], [2014, 0, 0, 0], [2015, 0, 0, 0], [2016, 0, 0, 0], [2017, 0, 0, 0], [2018, 0, 0, 0], [2019, 464, 251679.03, 291947.6748], [2020, 1410, 780911.73, 905857.6068], [2021, 2173, 1214596.41, 1408931.8355999999], [2022, 4185, 2616605.27, 3035262.1132], [2023, 3499, 2337805.48, 2711854.3567999997], [2024, 1920, 1297277.06, 1504841.3895999999], [2025, 965, 720207.26, 835440.4216], [2026, 729, 633371.74, 734711.2183999999]]}, "puma": {"PALERMO": [[2013, 208, 142644.09], [2014, 809, 576737.04], [2015, 1239, 929085], [2016, 1782, 1592576], [2017, 2662, 2726733], [2018, 2867, 3199324.5], [2019, 3390, 3357244.28], [2020, 3598, 3573460.4], [2021, 3819, 3936726.78], [2022, 2032, 2361557.26], [2023, 2635, 3190280.93], [2024, 1586, 1949508.1], [2025, 2043, 2125584], [2026, 1470, 1561301.9]], "RAGA": [[2013, 21, 23281.83], [2014, 117, 133679.65], [2015, 50, 56890], [2016, 34, 28524], [2017, 78, 79766], [2018, 114, 113466], [2019, 260, 296723.34], [2020, 195, 206358.2], [2021, 297, 419773.3], [2022, 337, 442353.65], [2023, 719, 804981], [2024, 1027, 1423302], [2025, 904, 1323961.1], [2026, 613, 749954]], "GRABASA_TYPHOON_BR": [[2013, 0, 0], [2014, 0, 0], [2015, 0, 0], [2016, 0, 0], [2017, 0, 0], [2018, 20, 16480], [2019, 26, 24101.16], [2020, 938, 1322021.04], [2021, 524, 661954.4], [2022, 507, 636117.4], [2023, 448, 698864.6], [2024, 395, 481110], [2025, 965, 1094706], [2026, 533, 607578.4]], "RAMIREZ_FAMILY": [[2013, 0, 0], [2014, 0, 0], [2015, 0, 0], [2016, 0, 0], [2017, 0, 0], [2018, 0, 0], [2019, 0, 0], [2020, 6, 5945], [2021, 43, 46908], [2022, 846, 888089], [2023, 1567, 2286413], [2024, 1522, 1882934], [2025, 513, 612228], [2026, 245, 218875]]}};
+
+const YEARS = RAW.compras.PALERMO.map(r => r[0]);
+const SUPPLIERS = ["PALERMO","RAGA","GRABASA_TYPHOON_BR","RAMIREZ_FAMILY"];
+const LABELS = {
+  PALERMO:"Palermo",
+  RAGA:"Raga",
+  GRABASA_TYPHOON_BR:"Grabasa / Typhoon / BR",
+  RAMIREZ_FAMILY:"Ramirez / Family"
+};
+const COLORS = {
+  PALERMO:"#c99a4b",
+  RAGA:"#6b7682",
+  GRABASA_TYPHOON_BR:"#8a94a0",
+  RAMIREZ_FAMILY:"#525c66"
+};
+
+function sum(arr, idx){ return arr.reduce((a,r)=>a+r[idx],0); }
+function fmtInt(n){ return Math.round(n).toLocaleString('es-MX'); }
+function fmtMoney(n){ return '$'+Math.round(n).toLocaleString('es-MX'); }
+function fmtPct(n){ return n.toFixed(1)+'%'; }
+
+// ---- Aggregate totals per supplier ----
+const totals = {};
+SUPPLIERS.forEach(s=>{
+  totals[s] = {
+    unidades: sum(RAW.compras[s],1),
+    sinIVA: sum(RAW.compras[s],2),
+    conIVA: sum(RAW.compras[s],3),
+    pumaUnidades: sum(RAW.puma[s],1),
+    pumaTotal: sum(RAW.puma[s],2)
+  };
+});
+const grandTotalUnidades = SUPPLIERS.reduce((a,s)=>a+totals[s].unidades,0);
+const grandTotalPuma = SUPPLIERS.reduce((a,s)=>a+totals[s].pumaUnidades,0);
+const palermoShare = totals.PALERMO.unidades / grandTotalUnidades * 100;
+const palermoPumaShare = totals.PALERMO.pumaUnidades / totals.PALERMO.unidades * 100;
+const rankedSuppliers = [...SUPPLIERS].sort((a,b)=>totals[b].unidades-totals[a].unidades);
+const palermoRank = rankedSuppliers.indexOf('PALERMO')+1;
+
+// ---- Hero stats ----
+document.getElementById('heroStats').innerHTML = `
+  <div class="stat"><div class="num">${fmtInt(totals.PALERMO.unidades)}</div><div class="lbl">pares comprados a Palermo desde 2013</div></div>
+  <div class="stat"><div class="num">${fmtPct(palermoShare)}</div><div class="lbl">de todo lo que compramos viene de Palermo</div></div>
+  <div class="stat"><div class="num">${fmtInt(totals.PALERMO.pumaUnidades)}</div><div class="lbl">pares Puma vendidos gracias a Palermo</div></div>
+  <div class="stat"><div class="num">14</div><div class="lbl">años de historial de compra continuo</div></div>
+`;
+
+// ---- Spotlight text ----
+document.getElementById('spShare').textContent = fmtPct(palermoShare);
+document.getElementById('spPumaShare').textContent = fmtPct(palermoPumaShare);
+document.getElementById('mPalermoUnits').textContent = fmtInt(totals.PALERMO.unidades);
+document.getElementById('mPalermoPuma').textContent = fmtInt(totals.PALERMO.pumaUnidades);
+document.getElementById('mPalermoRank').textContent = '#'+palermoRank;
+
+// ---- Chart defaults ----
+Chart.defaults.font.family = "'Inter', sans-serif";
+Chart.defaults.color = '#b7b0a0';
+Chart.defaults.borderColor = '#2c3843';
+
+function lineDataset(s, idx){
+  return {
+    label: LABELS[s],
+    data: RAW.compras[s].map(r=>r[idx]),
+    borderColor: COLORS[s],
+    backgroundColor: COLORS[s],
+    borderWidth: s==='PALERMO'?3:1.75,
+    pointRadius: s==='PALERMO'?3:0,
+    tension:0.25
+  };
+}
+
+new Chart(document.getElementById('chartCompras'), {
+  type:'line',
+  data:{ labels:YEARS, datasets: SUPPLIERS.map(s=>lineDataset(s,1)) },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{position:'bottom', labels:{boxWidth:10,boxHeight:10,padding:16}}},
+    scales:{ y:{ title:{display:true,text:'Unidades compradas'}, grid:{color:'#232d37'} }, x:{grid:{display:false}} }
+  }
+});
+
+function pumaLineDataset(s){
+  return {
+    label: LABELS[s],
+    data: RAW.puma[s].map(r=>r[1]),
+    borderColor: COLORS[s],
+    backgroundColor: COLORS[s],
+    borderWidth: s==='PALERMO'?3:1.75,
+    pointRadius: s==='PALERMO'?3:0,
+    tension:0.25
+  };
+}
+new Chart(document.getElementById('chartPuma'), {
+  type:'line',
+  data:{ labels:YEARS, datasets: SUPPLIERS.map(s=>pumaLineDataset(s)) },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{position:'bottom', labels:{boxWidth:10,boxHeight:10,padding:16}}},
+    scales:{ y:{ title:{display:true,text:'Unidades Puma vendidas'}, grid:{color:'#232d37'} }, x:{grid:{display:false}} }
+  }
+});
+
+// ---- Palermo detail: compras vs puma ----
+new Chart(document.getElementById('chartPalermoDetail'), {
+  data:{
+    labels:YEARS,
+    datasets:[
+      {type:'bar', label:'Compras totales (Palermo)', data:RAW.compras.PALERMO.map(r=>r[1]), backgroundColor:'#3a4652', order:2},
+      {type:'line', label:'De eso, unidades Puma', data:RAW.puma.PALERMO.map(r=>r[1]), borderColor:'#c99a4b', backgroundColor:'#c99a4b', borderWidth:3, pointRadius:3, tension:0.25, order:1}
+    ]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{position:'bottom', labels:{boxWidth:10,boxHeight:10,padding:16}}},
+    scales:{ y:{ title:{display:true,text:'Unidades'}, grid:{color:'#232d37'} }, x:{grid:{display:false}} }
+  }
+});
+
+// ---- Share donuts ----
+new Chart(document.getElementById('chartShareCompras'), {
+  type:'doughnut',
+  data:{ labels:SUPPLIERS.map(s=>LABELS[s]), datasets:[{ data:SUPPLIERS.map(s=>totals[s].unidades), backgroundColor:SUPPLIERS.map(s=>COLORS[s]), borderColor:'#1a222b', borderWidth:2 }] },
+  options:{ responsive:true, maintainAspectRatio:false, cutout:'62%', plugins:{ legend:{position:'bottom', labels:{boxWidth:10,boxHeight:10,padding:14,font:{size:12}}}, title:{display:true,text:'Compras totales (unidades)',color:'#ede8dc',font:{size:14,family:"'Fraunces', serif"}} } }
+});
+new Chart(document.getElementById('chartSharePuma'), {
+  type:'doughnut',
+  data:{ labels:SUPPLIERS.map(s=>LABELS[s]), datasets:[{ data:SUPPLIERS.map(s=>totals[s].pumaUnidades), backgroundColor:SUPPLIERS.map(s=>COLORS[s]), borderColor:'#1a222b', borderWidth:2 }] },
+  options:{ responsive:true, maintainAspectRatio:false, cutout:'62%', plugins:{ legend:{position:'bottom', labels:{boxWidth:10,boxHeight:10,padding:14,font:{size:12}}}, title:{display:true,text:'Ventas Puma (unidades)',color:'#ede8dc',font:{size:14,family:"'Fraunces', serif"}} } }
+});
+
+// ---- Tabs + table ----
+const tabsEl = document.getElementById('tabs');
+let activeSupplier = 'PALERMO';
+SUPPLIERS.forEach(s=>{
+  const btn = document.createElement('div');
+  btn.className = 'tab'+(s===activeSupplier?' active':'');
+  btn.textContent = LABELS[s];
+  btn.onclick = ()=>{ activeSupplier=s; renderTable(); [...tabsEl.children].forEach(c=>c.classList.remove('active')); btn.classList.add('active'); };
+  tabsEl.appendChild(btn);
+});
+
+function renderTable(){
+  const tbody = document.getElementById('tableBody');
+  const cRows = RAW.compras[activeSupplier];
+  const pRows = RAW.puma[activeSupplier];
+  let html = '';
+  cRows.forEach((row,i)=>{
+    const [year, unidades, sinIVA, conIVA] = row;
+    const [,pUnid,pTotal] = pRows[i];
+    const pct = unidades>0 ? (pUnid/unidades*100) : 0;
+    html += `<tr>
+      <td>${year}</td>
+      <td>${fmtInt(unidades)}</td>
+      <td>${fmtMoney(sinIVA)}</td>
+      <td>${fmtMoney(conIVA)}</td>
+      <td>${fmtInt(pUnid)}</td>
+      <td>${fmtMoney(pTotal)}</td>
+      <td>${unidades>0?fmtPct(pct):'—'}</td>
+    </tr>`;
+  });
+  const t = totals[activeSupplier];
+  const totalPct = t.unidades>0 ? (t.pumaUnidades/t.unidades*100) : 0;
+  html += `<tr class="total">
+    <td>TOTAL</td>
+    <td>${fmtInt(t.unidades)}</td>
+    <td>${fmtMoney(t.sinIVA)}</td>
+    <td>${fmtMoney(t.conIVA)}</td>
+    <td>${fmtInt(t.pumaUnidades)}</td>
+    <td>${fmtMoney(t.pumaTotal)}</td>
+    <td>${fmtPct(totalPct)}</td>
+  </tr>`;
+  tbody.innerHTML = html;
+}
+renderTable();
+</script>
+</body>
+</html>

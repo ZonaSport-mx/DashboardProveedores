@@ -25,12 +25,21 @@
   }
   *{box-sizing:border-box;}
   html{scroll-behavior:smooth;}
+  html,body{max-width:100%;overflow-x:hidden;}
   body{
     margin:0;
     background:var(--ink);
     color:var(--paper);
     font-family:'Inter',sans-serif;
     line-height:1.5;
+  }
+  img,canvas,svg,table{max-width:100%;}
+  .spotlight-grid > *,
+  .stat-row > *,
+  .mini-stats > *,
+  .share-grid > *,
+  section > .wrap > *{
+    min-width:0;
   }
   h1,h2,h3,.display{
     font-family:'Fraunces',serif;
@@ -43,10 +52,16 @@
     margin:0 auto;
     padding:0 32px;
   }
+  @media (max-width:640px){
+    .wrap{ padding:0 18px; }
+  }
   /* ---------- HERO ---------- */
   header.hero{
     padding:88px 0 64px;
     border-bottom:1px solid var(--rule);
+  }
+  @media (max-width:640px){
+    header.hero{ padding:52px 0 40px; }
   }
   .kicker{
     color:var(--gold-soft);
@@ -102,6 +117,9 @@
     border-bottom:1px solid var(--rule);
   }
   section:last-of-type{border-bottom:none;}
+  @media (max-width:640px){
+    section{ padding:40px 0; }
+  }
   .section-head{
     display:flex;
     justify-content:space-between;
@@ -126,7 +144,21 @@
     padding:28px 26px;
   }
   .chart-box.tall{height:380px;position:relative;}
+  .chart-box.md{height:300px;position:relative;}
   .chart-box canvas{max-height:100%;}
+  @media (max-width:640px){
+    .chart-box{ padding:18px 14px; }
+    .chart-box.tall{ height:280px; }
+    .chart-box.md{ height:240px; }
+  }
+  .share-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:24px;
+  }
+  @media (max-width:640px){
+    .share-grid{ grid-template-columns:1fr; }
+  }
   .legend-note{
     display:flex;
     gap:22px;
@@ -154,6 +186,9 @@
     .spotlight-grid{grid-template-columns:1fr;}
     .stat-row{grid-template-columns:repeat(2,1fr);}
   }
+  @media (max-width:480px){
+    .stat-row{grid-template-columns:1fr;}
+  }
   .spotlight h3{
     font-size:24px;
     color:var(--gold-soft);
@@ -169,14 +204,21 @@
     font-weight:600;
   }
   .mini-stats{
-    display:flex;
-    gap:28px;
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:18px 24px;
     margin-top:20px;
-    flex-wrap:wrap;
   }
-  .mini-stats div{min-width:120px;}
-  .mini-stats .n{font-family:'Fraunces',serif;font-size:26px;color:var(--gold-soft);}
-  .mini-stats .l{font-size:12.5px;color:var(--paper-dim);margin-top:4px;}
+  .mini-stats div{
+    border-top:1px solid var(--rule);
+    padding-top:10px;
+  }
+  .mini-stats .n{font-family:'Fraunces',serif;font-size:24px;color:var(--gold-soft);}
+  .mini-stats .l{font-size:12px;color:var(--paper-dim);margin-top:4px;line-height:1.35;}
+  @media (max-width:640px){
+    .mini-stats{ gap:14px 18px; margin-top:16px; }
+    .mini-stats .n{ font-size:21px; }
+  }
 
   /* ---------- TABS ---------- */
   .tabs{
@@ -204,6 +246,7 @@
   /* ---------- TABLE ---------- */
   table{
     width:100%;
+    min-width:640px;
     border-collapse:collapse;
     font-size:14px;
   }
@@ -310,7 +353,7 @@
             nuestra compra de Puma con Palermo tuvo su punto más alto en <span id="pkYear"></span> (<span id="pkUnits"></span> pares) y desde entonces ha bajado a <span id="lastUnits"></span> en 2026, conforme sumamos más proveedores a la mezcla. Aun con esa baja, Palermo nunca ha dejado de ser nuestra fuente #1 de Puma, año tras año — algo que ningún otro proveedor puede decir.
           </p>
         </div>
-        <div class="chart-box" style="height:320px;position:relative;">
+        <div class="chart-box md">
           <canvas id="chartPalermoDetail"></canvas>
         </div>
       </div>
@@ -324,11 +367,11 @@
       <h2 class="display">Participación de cada proveedor, 2013–2026</h2>
       <p class="section-note">Suma total del periodo. A la izquierda, unidades compradas en general. A la derecha, unidades de Puma vendidas.</p>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;" id="shareGrid">
-      <div class="chart-box" style="height:300px;position:relative;">
+    <div class="share-grid" id="shareGrid">
+      <div class="chart-box md">
         <canvas id="chartShareCompras"></canvas>
       </div>
-      <div class="chart-box" style="height:300px;position:relative;">
+      <div class="chart-box md">
         <canvas id="chartSharePuma"></canvas>
       </div>
     </div>
@@ -368,7 +411,7 @@
       <p class="section-note">Selecciona un proveedor para ver su historial completo de compras y ventas Puma.</p>
     </div>
     <div class="tabs" id="tabs"></div>
-    <div class="chart-box">
+    <div class="chart-box" style="overflow-x:auto;">
       <table id="dataTable">
         <thead>
           <tr>
